@@ -7,10 +7,9 @@
 - **数据访问层（Mapper）**：基于MyBatis实现与MySQL数据库的交互，负责用户信息、问答历史（`QuestionHistoryMapper`）、会话数据（`ConversationMapper`）等的持久化。
 - **外部服务集成层**：集成大模型服务（阿里云Dashscope、Ollama）、缓存服务（Redis）等，通过封装的工具类（如`JwtUtil`、`ModelService`）实现交互。
 - **主要代码结构**：
-
-  ai-customer-service/
-   src/
-     └── main/
+-  ai-customer-service/
+-   src/
+-     └── main/
        ├── dataset.sql
        ├── java/
        │   └── com/
