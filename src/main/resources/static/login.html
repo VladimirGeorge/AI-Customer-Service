@@ -1,0 +1,530 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI客服系统 - 登录注册</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdn.jsdelivr.net/npm/font-awesome@4.7.0/css/font-awesome.min.css" rel="stylesheet">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#165DFF',
+                        secondary: '#36CFC9',
+                        neutral: '#F2F3F5',
+                        dark: '#1D2129',
+                    },
+                    fontFamily: {
+                        inter: ['Inter', 'system-ui', 'sans-serif'],
+                    },
+                }
+            }
+        }
+    </script>
+    <style type="text/tailwindcss">
+        @layer utilities {
+            .content-auto {
+                content-visibility: auto;
+            }
+            .bg-gradient-blue {
+                background: linear-gradient(135deg, #165DFF 0%, #36CFC9 100%);
+            }
+            .text-shadow {
+                text-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            }
+            .transition-custom {
+                transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            }
+            .error-text {
+                color: #dc2626;
+                font-size: 0.875rem;
+                margin-top: 0.25rem;
+            }
+            .loading {
+                opacity: 0.7;
+                cursor: not-allowed;
+            }
+        }
+    </style>
+</head>
+<body class="font-inter bg-gray-50 min-h-screen flex items-center justify-center p-4">
+<div class="w-full max-w-6xl bg-white rounded-2xl shadow-xl overflow-hidden flex flex-col md:flex-row">
+    <!-- 左侧品牌区域 -->
+    <div class="md:w-2/5 bg-gradient-blue p-8 md:p-12 text-white flex flex-col justify-between">
+        <div>
+            <h1 class="text-[clamp(1.8rem,4vw,2.5rem)] font-bold text-shadow mb-4">AI客服系统</h1>
+            <p class="text-blue-50 opacity-90 mb-8">智能、高效的客户服务解决方案，让沟通更简单</p>
+
+            <div class="space-y-6">
+                <div class="flex items-start space-x-4">
+                    <div class="bg-white/20 p-3 rounded-lg">
+                        <i class="fa fa-bolt text-xl"></i>
+                    </div>
+                    <div>
+                        <h3 class="font-semibold text-lg mb-1">智能应答</h3>
+                        <p class="text-blue-50 opacity-80 text-sm">基于AI技术，快速理解并回答客户问题</p>
+                    </div>
+                </div>
+
+                <div class="flex items-start space-x-4">
+                    <div class="bg-white/20 p-3 rounded-lg">
+                        <i class="fa fa-comments text-xl"></i>
+                    </div>
+                    <div>
+                        <h3 class="font-semibold text-lg mb-1">多渠道支持</h3>
+                        <p class="text-blue-50 opacity-80 text-sm">支持网站、APP、社交媒体等多平台接入</p>
+                    </div>
+                </div>
+
+                <div class="flex items-start space-x-4">
+                    <div class="bg-white/20 p-3 rounded-lg">
+                        <i class="fa fa-line-chart text-xl"></i>
+                    </div>
+                    <div>
+                        <h3 class="font-semibold text-lg mb-1">数据分析</h3>
+                        <p class="text-blue-50 opacity-80 text-sm">深度分析客户问题，提供业务优化建议</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="mt-8 md:mt-16">
+            <p class="text-blue-50 opacity-70 text-sm mb-2">已有账号？</p>
+            <button id="showLoginBtn" class="px-6 py-3 bg-white text-primary rounded-lg font-medium shadow-lg hover:shadow-xl transition-custom focus:outline-none focus:ring-2 focus:ring-white focus:ring-opacity-50">
+                立即登录
+            </button>
+        </div>
+    </div>
+
+    <!-- 右侧表单区域 -->
+    <div class="md:w-3/5 p-8 md:p-12 flex flex-col justify-center">
+        <!-- 登录表单 -->
+        <div id="loginForm" class="space-y-8">
+            <div>
+                <h2 class="text-2xl md:text-3xl font-bold text-dark mb-2">欢迎回来</h2>
+                <p class="text-gray-500">请使用注册邮箱作为用户名登录</p>
+            </div>
+
+            <form class="space-y-5">
+                <!-- 用户名（邮箱）输入 -->
+                <div>
+                    <label for="loginUsername" class="block text-sm font-medium text-gray-700 mb-1">
+                        用户名（邮箱）<span class="text-red-500">*</span>
+                    </label>
+                    <div class="relative">
+                        <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                            <i class="fa fa-envelope-o text-gray-400"></i>
+                        </div>
+                        <input
+                                type="email"
+                                id="loginUsername"
+                                name="username"
+                                class="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary/50 focus:border-primary transition-custom"
+                                placeholder="your@email.com"
+                                required
+                        >
+                    </div>
+                    <p class="mt-1 text-xs text-gray-500">请使用邮箱地址作为用户名</p>
+                    <div id="loginUsernameError" class="error-text hidden"></div>
+                </div>
+
+                <!-- 密码输入 -->
+                <div>
+                    <label for="loginPassword" class="block text-sm font-medium text-gray-700 mb-1">
+                        密码<span class="text-red-500">*</span>
+                    </label>
+                    <div class="relative">
+                        <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                            <i class="fa fa-lock text-gray-400"></i>
+                        </div>
+                        <input
+                                type="password"
+                                id="loginPassword"
+                                name="password"
+                                class="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary/50 focus:border-primary transition-custom"
+                                placeholder="至少8位，包含字母和数字"
+                                required
+                        >
+                        <button type="button" class="absolute inset-y-0 right-0 pr-3 flex items-center" onclick="togglePasswordVisibility('loginPassword')">
+                            <i class="fa fa-eye-slash text-gray-400"></i>
+                        </button>
+                    </div>
+                    <div id="loginPasswordError" class="error-text hidden"></div>
+                </div>
+
+                <div class="flex items-center justify-between">
+                    <div class="flex items-center">
+                        <input type="checkbox" id="rememberMe" class="h-4 w-4 text-primary focus:ring-primary border-gray-300 rounded">
+                        <label for="rememberMe" class="ml-2 block text-sm text-gray-700">记住我</label>
+                    </div>
+                    <a href="#" class="text-sm font-medium text-primary hover:text-primary/80 transition-custom">忘记密码？</a>
+                </div>
+
+                <button type="button" id="loginSubmit" class="w-full bg-primary hover:bg-primary/90 text-white font-medium py-3 px-4 rounded-lg shadow-md hover:shadow-lg transition-custom focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2">
+                    登录
+                </button>
+            </form>
+
+            <div class="flex items-center justify-center">
+                <p class="text-gray-600">还没有账号？</p>
+                <button id="showRegisterBtn" class="ml-2 text-primary font-medium hover:text-primary/80 transition-custom">
+                    立即注册
+                </button>
+            </div>
+
+            <div class="relative">
+                <div class="absolute inset-0 flex items-center">
+                    <div class="w-full border-t border-gray-300"></div>
+                </div>
+                <div class="relative flex justify-center text-sm">
+                    <span class="px-2 bg-white text-gray-500">其他登录方式</span>
+                </div>
+            </div>
+
+            <div class="grid grid-cols-3 gap-4">
+                <button class="flex justify-center items-center py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition-custom">
+                    <i class="fa fa-weixin text-green-600 text-xl"></i>
+                </button>
+                <button class="flex justify-center items-center py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition-custom">
+                    <i class="fa fa-qq text-blue-500 text-xl"></i>
+                </button>
+                <button class="flex justify-center items-center py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition-custom">
+                    <i class="fa fa-github text-gray-800 text-xl"></i>
+                </button>
+            </div>
+        </div>
+
+        <!-- 注册表单 (默认隐藏) -->
+        <div id="registerForm" class="space-y-8 hidden">
+            <div>
+                <h2 class="text-2xl md:text-3xl font-bold text-dark mb-2">创建新账号</h2>
+                <p class="text-gray-500">请使用邮箱作为用户名注册</p>
+            </div>
+
+            <form class="space-y-5">
+                <!-- 用户名（邮箱）输入 -->
+                <div>
+                    <label for="registerUsername" class="block text-sm font-medium text-gray-700 mb-1">
+                        用户名（邮箱）<span class="text-red-500">*</span>
+                    </label>
+                    <div class="relative">
+                        <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                            <i class="fa fa-envelope-o text-gray-400"></i>
+                        </div>
+                        <input
+                                type="email"
+                                id="registerUsername"
+                                name="username"
+                                class="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary/50 focus:border-primary transition-custom"
+                                placeholder="your@email.com"
+                                required
+                        >
+                    </div>
+                    <p class="mt-1 text-xs text-gray-500">请使用邮箱地址作为用户名</p>
+                    <div id="registerUsernameError" class="error-text hidden"></div>
+                </div>
+
+                <!-- 密码输入 -->
+                <div>
+                    <label for="registerPassword" class="block text-sm font-medium text-gray-700 mb-1">
+                        密码<span class="text-red-500">*</span>
+                    </label>
+                    <div class="relative">
+                        <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                            <i class="fa fa-lock text-gray-400"></i>
+                        </div>
+                        <input
+                                type="password"
+                                id="registerPassword"
+                                name="password"
+                                class="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary/50 focus:border-primary transition-custom"
+                                placeholder="至少8位，包含字母和数字"
+                                required
+                        >
+                        <button type="button" class="absolute inset-y-0 right-0 pr-3 flex items-center" onclick="togglePasswordVisibility('registerPassword')">
+                            <i class="fa fa-eye-slash text-gray-400"></i>
+                        </button>
+                    </div>
+                    <div id="registerPasswordError" class="error-text hidden"></div>
+                </div>
+
+                <!-- 确认密码 -->
+                <div>
+                    <label for="registerConfirmPassword" class="block text-sm font-medium text-gray-700 mb-1">
+                        确认密码<span class="text-red-500">*</span>
+                    </label>
+                    <div class="relative">
+                        <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                            <i class="fa fa-lock text-gray-400"></i>
+                        </div>
+                        <input
+                                type="password"
+                                id="registerConfirmPassword"
+                                name="confirmPassword"
+                                class="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary/50 focus:border-primary transition-custom"
+                                placeholder="请再次输入密码"
+                                required
+                        >
+                        <button type="button" class="absolute inset-y-0 right-0 pr-3 flex items-center" onclick="togglePasswordVisibility('registerConfirmPassword')">
+                            <i class="fa fa-eye-slash text-gray-400"></i>
+                        </button>
+                    </div>
+                    <div id="registerConfirmPasswordError" class="error-text hidden"></div>
+                </div>
+
+                <div class="flex items-start">
+                    <div class="flex items-center h-5">
+                        <input type="checkbox" id="agreeTerms" class="h-4 w-4 text-primary focus:ring-primary border-gray-300 rounded">
+                    </div>
+                    <div class="ml-3 text-sm">
+                        <label for="agreeTerms" class="text-gray-600">我已阅读并同意<a href="#" class="text-primary hover:text-primary/80">服务条款</a>和<a href="#" class="text-primary hover:text-primary/80">隐私政策</a></label>
+                    </div>
+                    <div id="agreeTermsError" class="error-text hidden ml-2"></div>
+                </div>
+
+                <button type="button" id="registerSubmit" class="w-full bg-primary hover:bg-primary/90 text-white font-medium py-3 px-4 rounded-lg shadow-md hover:shadow-lg transition-custom focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2">
+                    注册账号
+                </button>
+            </form>
+
+            <div class="flex items-center justify-center">
+                <p class="text-gray-600">已有账号？</p>
+                <button id="showLoginBtn2" class="ml-2 text-primary font-medium hover:text-primary/80 transition-custom">
+                    立即登录
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    // 密码可见性切换
+    function togglePasswordVisibility(inputId) {
+        const input = document.getElementById(inputId);
+        const icon = input.nextElementSibling.querySelector('i');
+
+        if (input.type === 'password') {
+            input.type = 'text';
+            icon.classList.remove('fa-eye-slash');
+            icon.classList.add('fa-eye');
+        } else {
+            input.type = 'password';
+            icon.classList.remove('fa-eye');
+            icon.classList.add('fa-eye-slash');
+        }
+    }
+
+    // 表单切换逻辑
+    document.getElementById('showRegisterBtn').addEventListener('click', function() {
+        document.getElementById('loginForm').classList.add('hidden');
+        document.getElementById('registerForm').classList.remove('hidden');
+        clearAllErrors();
+    });
+
+    document.getElementById('showLoginBtn').addEventListener('click', function() {
+        document.getElementById('registerForm').classList.add('hidden');
+        document.getElementById('loginForm').classList.remove('hidden');
+        clearAllErrors();
+    });
+
+    document.getElementById('showLoginBtn2').addEventListener('click', function() {
+        document.getElementById('registerForm').classList.add('hidden');
+        document.getElementById('loginForm').classList.remove('hidden');
+        clearAllErrors();
+    });
+
+    // 清除所有错误提示
+    function clearAllErrors() {
+        const errorElements = document.querySelectorAll('.error-text');
+        errorElements.forEach(el => {
+            el.classList.add('hidden');
+            el.textContent = '';
+        });
+    }
+
+    // 显示错误提示
+    function showError(elementId, message) {
+        const errorEl = document.getElementById(elementId);
+        errorEl.textContent = message;
+        errorEl.classList.remove('hidden');
+    }
+
+    // 登录按钮事件
+    document.getElementById('loginSubmit').addEventListener('click', async function() {
+        const loginBtn = this;
+        const username = document.getElementById('loginUsername').value.trim();
+        const password = document.getElementById('loginPassword').value.trim();
+        let isValid = true;
+
+        // 清除错误
+        clearAllErrors();
+
+        // 前端验证
+        if (!username) {
+            showError('loginUsernameError', '请输入用户名（邮箱）');
+            isValid = false;
+        } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(username)) {
+            showError('loginUsernameError', '请输入有效的邮箱地址');
+            isValid = false;
+        }
+
+        if (!password) {
+            showError('loginPasswordError', '请输入密码');
+            isValid = false;
+        }
+
+        if (!isValid) return;
+
+        // 禁用按钮，防止重复提交
+        loginBtn.disabled = true;
+        loginBtn.innerHTML = '<i class="fa fa-spinner fa-spin mr-2"></i>登录中...';
+
+        try {
+            // 发送登录请求
+            const response = await fetch('/api/auth/login', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    username: username,
+                    password: password
+                })
+            });
+
+            // 处理响应
+            let data;
+            try {
+                data = await response.json(); // 尝试解析JSON
+            } catch (e) {
+                // 解析JSON失败，读取文本响应
+                const text = await response.text();
+                console.error('解析JSON响应失败，响应文本:', text);
+                throw new Error(text || `服务器错误 (${response.status})`);
+            }
+
+            if (!response.ok) {
+                // 后端返回错误状态码
+                console.error('登录请求失败，错误信息:', data.message || `登录失败 (${response.status})`);
+                throw new Error(data.message || `登录失败 (${response.status})`);
+            }
+
+            // 登录成功：跳转至问答系统页面（chat.html）
+            if (data.code === 200) {
+                // 保存token（从data.data字段读取，与后端返回结构匹配）
+                const token = data.data;  // 关键修改：Token在data字段中
+                console.log('后端返回的Token:', token);  // 打印Token，确认是否存在
+
+                if (token) {
+                    localStorage.setItem('token', token);
+                    console.log('登录页存储Token成功:', localStorage.getItem('token'));  // 验证存储结果
+                } else {
+                    console.error('后端未返回有效的Token');
+                    throw new Error('后端未返回有效的Token');  // 明确提示Token缺失
+                }
+
+                // 延迟跳转，确保localStorage存储完成
+                setTimeout(() => {
+                    window.location.href = 'chat.html';
+                }, 100);
+            }
+        } catch (error) {
+            console.error('登录过程中出现错误:', error);
+            showError('loginUsernameError', error.message);
+            loginBtn.disabled = false;
+            loginBtn.innerHTML = '登录';
+        }
+    });
+
+    // 注册按钮事件
+    document.getElementById('registerSubmit').addEventListener('click', async function() {
+        const registerBtn = this;
+        const username = document.getElementById('registerUsername').value.trim();
+        const password = document.getElementById('registerPassword').value.trim();
+        const confirmPassword = document.getElementById('registerConfirmPassword').value.trim();
+        const agreeTerms = document.getElementById('agreeTerms').checked;
+        let isValid = true;
+
+        // 清除错误
+        clearAllErrors();
+
+        // 前端验证
+        if (!username) {
+            showError('registerUsernameError', '请输入用户名（邮箱）');
+            isValid = false;
+        } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(username)) {
+            showError('registerUsernameError', '请输入有效的邮箱地址');
+            isValid = false;
+        }
+
+        if (!password) {
+            showError('registerPasswordError', '请输入密码');
+            isValid = false;
+        } else if (password.length < 8 || !/.*[A-Za-z].*/.test(password) || !/.*\d.*/.test(password)) {
+            showError('registerPasswordError', '密码需至少8位，包含字母和数字');
+            isValid = false;
+        }
+
+        if (password !== confirmPassword) {
+            showError('registerConfirmPasswordError', '两次输入的密码不一致');
+            isValid = false;
+        }
+
+        if (!agreeTerms) {
+            showError('agreeTermsError', '请同意服务条款和隐私政策');
+            isValid = false;
+        }
+
+        if (!isValid) return;
+
+        // 禁用按钮，防止重复提交
+        registerBtn.disabled = true;
+        registerBtn.innerHTML = '<i class="fa fa-spinner fa-spin mr-2"></i>注册中...';
+
+        try {
+            // 发送注册请求
+            const response = await fetch('/api/auth/register', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    username: username,
+                    password: password
+                })
+            });
+
+            // 处理响应
+            let data;
+            try {
+                data = await response.json(); // 尝试解析JSON
+            } catch (e) {
+                // 解析JSON失败，读取文本响应
+                const text = await response.text();
+                console.error('解析JSON响应失败，响应文本:', text);
+                throw new Error(text || `服务器错误 (${response.status})`);
+            }
+
+            if (!response.ok) {
+                // 后端返回错误状态码
+                console.error('注册请求失败，错误信息:', data.message || `注册失败 (${response.status})`);
+                throw new Error(data.message || `注册失败 (${response.status})`);
+            }
+
+            // 注册成功：提示用户并切换到登录表单
+            alert('注册成功，请使用新账号登录');
+            document.getElementById('registerForm').classList.add('hidden');
+            document.getElementById('loginForm').classList.remove('hidden');
+            clearAllErrors();
+        } catch (error) {
+            console.error('注册过程中出现错误:', error);
+            showError('registerUsernameError', error.message);
+            registerBtn.disabled = false;
+            registerBtn.innerHTML = '注册账号';
+        }
+    });
+</script>
+</body>
+</html>

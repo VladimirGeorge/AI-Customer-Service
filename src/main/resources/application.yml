@@ -1,0 +1,45 @@
+server:
+  port: 8080
+  #servlet:
+  #  context-path: /api
+
+spring:
+  datasource:
+    driver-class-name: com.mysql.cj.jdbc.Driver  # MySQL 8.0+ 驱动（兼容Java 17）
+    # 数据库URL：修改数据库名、端口（若需）
+    url: jdbc:mysql://localhost:3306/ai_customer_service?useUnicode=true&characterEncoding=utf-8&useSSL=false&serverTimezone=Asia/Shanghai
+    username: root  # 替换为你的本地MySQL用户名
+    password: suibe-0816  # 替换为你的本地MySQL密码（若为空则填""）
+    type: com.zaxxer.hikari.HikariDataSource  # 连接池（默认推荐）
+    hikari:
+      minimum-idle: 5  # 最小空闲连接数
+      maximum-pool-size: 15  # 最大连接数（根据本地性能调整）
+
+  data:
+    redis:
+      host: localhost
+      port: 6379
+      database: 0
+
+mybatis-plus:
+  type-aliases-package: com.ai.entity  # 显式指定实体类包
+  configuration:
+    map-underscore-to-camel-case: true
+    # 关闭 MyBatis 的类型别名自动扫描（避免与 Spring 冲突）
+    use-generated-keys: true
+  global-config:
+    db-config:
+      id-type: AUTO  # 统一主键策略，避免类型推断
+    banner: false  # 关闭 banner，减少启动干扰线转驼峰命名（数据库字段自动映射实体类属性）
+
+# JWT配置（保持不变）
+jwt:
+  secret: aiCustomerServiceSecretKey1234567890abcdefghijklmnopqrstuvwxyz  # 至少32位
+  expiration: 86400  # 24小时（秒）
+
+# 线程池配置（保持不变）
+thread:
+  pool:
+    core-size: 5
+    max-size: 10
+    queue-capacity: 100

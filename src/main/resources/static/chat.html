@@ -1,0 +1,770 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>智能聊天助手</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdn.jsdelivr.net/npm/font-awesome@4.7.0/css/font-awesome.min.css" rel="stylesheet">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#165DFF',
+                        secondary: '#00B42A',
+                        danger: '#F53F3F',
+                        warning: '#FF7D00',
+                        success: '#00B42A',
+                        'gray-50': '#F5F7FA',
+                        'gray-100': '#E5E6EB',
+                        'gray-200': '#C9CDD4',
+                        'gray-300': '#86909C',
+                        'gray-400': '#4E5969',
+                        'gray-500': '#1D2129',
+                    },
+                    fontFamily: {
+                        inter: ['Inter', 'system-ui', 'sans-serif'],
+                    },
+                    boxShadow: {
+                        'custom': '0 4px 20px rgba(0, 0, 0, 0.08)',
+                    },
+                    transitionProperty: {
+                        'custom': 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+                    }
+                },
+            }
+        }
+    </script>
+    <style type="text/tailwindcss">
+        @layer utilities {
+            .content-auto {
+                content-visibility: auto;
+            }
+            .message-bubble {
+                @apply max-w-[80%] p-3 rounded-lg shadow-custom;
+            }
+            .user-message {
+                @apply bg-primary text-white;
+            }
+            .ai-message {
+                @apply bg-white border border-gray-100;
+            }
+            .typing-indicator {
+                @apply flex space-x-1;
+            }
+            .typing-dot {
+                @apply w-2 h-2 bg-gray-400 rounded-full animate-bounce;
+            }
+            /* 标题和水平线样式优化 */
+            .ai-message h1 { @apply text-xl font-bold mt-4 mb-2; }
+            .ai-message h2 { @apply text-lg font-bold mt-3 mb-1; }
+            .ai-message h3 { @apply text-base font-bold mt-2 mb-1; }
+            .ai-message strong { @apply font-bold; }
+            .ai-message br { @apply my-1; }
+            .ai-message hr { @apply my-4 border-gray-200; }
+        }
+    </style>
+</head>
+<body class="font-inter bg-gray-50 min-h-screen flex flex-col">
+<!-- 导航栏 -->
+<header class="bg-white shadow-sm sticky top-0 z-10">
+    <div class="container mx-auto px-4 py-3 flex justify-between items-center">
+        <div class="flex items-center space-x-2">
+            <i class="fa fa-comments text-primary text-xl"></i>
+            <h1 class="text-lg font-semibold text-gray-500">智能聊天助手</h1>
+        </div>
+        <div class="flex items-center space-x-4">
+            <button id="historyBtn" class="text-gray-400 hover:text-primary transition-custom">
+                <i class="fa fa-history"></i>
+                <span class="hidden md:inline ml-1">历史记录</span>
+            </button>
+            <button id="knowledgeBtn" class="text-gray-400 hover:text-primary transition-custom">
+                <i class="fa fa-book"></i>
+                <span class="hidden md:inline ml-1">知识库</span>
+            </button>
+            <button id="logoutBtn" class="text-gray-400 hover:text-danger transition-custom">
+                <i class="fa fa-sign-out"></i>
+                <span class="hidden md:inline ml-1">退出</span>
+            </button>
+            <!-- 添加下拉框 -->
+            <select id="modelSelector" class="border border-gray-200 rounded-lg p-2">
+                <option value="qwen">Qwen模型</option>
+                <option value="deepseek">DeepSeek模型</option>
+            </select>
+        </div>
+    </div>
+</header>
+
+<!-- 主内容区 -->
+<main class="flex-1 container mx-auto px-4 py-6 flex flex-col md:flex-row gap-4">
+    <!-- 历史记录侧边栏 -->
+    <aside class="w-full md:w-1/4 lg:w-1/5 bg-white rounded-lg shadow-custom p-4">
+        <!-- 新增：新对话按钮 -->
+        <button id="newConversationBtn" class="w-full bg-primary text-white py-2 px-4 rounded-lg mb-4 hover:bg-primary/90 transition-custom flex items-center justify-center">
+            <i class="fa fa-plus-circle mr-2"></i>新对话
+        </button>
+
+        <h2 class="text-lg font-medium text-gray-500 mb-3 flex items-center">
+            <i class="fa fa-history text-primary mr-2"></i>历史记录
+        </h2>
+        <div id="historyList" class="space-y-2 overflow-y-auto max-h-[calc(100vh-16rem)]">
+            <div class="text-center text-gray-500 py-4">暂无历史记录</div>
+        </div>
+    </aside>
+
+    <!-- 聊天区域 -->
+    <section class="flex-1 bg-white rounded-lg shadow-custom flex flex-col">
+        <div id="chatMessages" class="flex-1 p-4 overflow-y-auto max-h-[calc(100vh-12rem)]">
+            <!-- 欢迎消息 -->
+            <div class="ai-message-container mb-4">
+                <div class="ai-message message-bubble">
+                    <p>你好！我是智能聊天助手，有什么可以帮助你的吗？</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- 输入区域 -->
+        <div class="border-t border-gray-100 p-4">
+            <div class="relative">
+                    <textarea id="userInput" placeholder="请输入您的问题..."
+                              class="w-full border border-gray-200 rounded-lg p-3 pr-12 focus:outline-none focus:ring-2 focus:ring-primary/50 resize-none transition-custom"
+                              rows="1"></textarea>
+                <button id="sendBtn" class="absolute right-3 bottom-3 text-primary hover:text-primary/80 transition-custom">
+                    <i class="fa fa-paper-plane text-lg"></i>
+                </button>
+            </div>
+            <p class="text-xs text-gray-300 mt-2">提示：按Enter发送消息，Shift+Enter换行</p>
+        </div>
+    </section>
+</main>
+
+<!-- 知识库模态框 -->
+<div id="knowledgeModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 hidden">
+    <div class="bg-white rounded-lg shadow-xl w-full max-w-3xl max-h-[80vh] flex flex-col">
+        <div class="p-4 border-b border-gray-100 flex justify-between items-center">
+            <h3 class="text-lg font-medium text-gray-500">知识库</h3>
+            <button id="closeKnowledgeModal" class="text-gray-400 hover:text-gray-500">
+                <i class="fa fa-times"></i>
+            </button>
+        </div>
+        <div id="knowledgeBaseList" class="p-4 overflow-y-auto">
+            <div class="text-gray-500 text-center py-4">暂无知识库内容</div>
+        </div>
+        <div class="p-4 border-t border-gray-100">
+            <input type="text" id="newKnowledgeQuestion" placeholder="输入知识问题" class="w-full border border-gray-200 rounded-lg p-3 mr-2 focus:outline-none focus:ring-2 focus:ring-primary/50">
+            <input type="text" id="newKnowledgeAnswer" placeholder="输入知识答案" class="w-full border border-gray-200 rounded-lg p-3 mr-2 focus:outline-none focus:ring-2 focus:ring-primary/50 mt-2">
+            <button id="addKnowledgeBtn" class="bg-primary text-white px-4 py-2 rounded hover:bg-primary/90 transition-custom mt-2">
+                <i class="fa fa-plus mr-1"></i>添加知识
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- 历史记录模态框 -->
+<div id="historyModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 hidden">
+    <div class="bg-white rounded-lg shadow-xl w-full max-w-3xl max-h-[80vh] flex flex-col">
+        <div class="p-4 border-b border-gray-100 flex justify-between items-center">
+            <h3 class="text-lg font-medium text-gray-500">聊天历史记录</h3>
+            <button id="closeHistoryModal" class="text-gray-400 hover:text-gray-500">
+                <i class="fa fa-times"></i>
+            </button>
+        </div>
+        <div id="historyTableContainer" class="p-4 overflow-y-auto">
+            <table id="historyTable" class="min-w-full divide-y divide-gray-200">
+                <thead class="bg-gray-50">
+                <tr>
+                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">问题</th>
+                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">答案</th>
+                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">时间</th>
+                </tr>
+                </thead>
+                <tbody id="historyTableBody" class="bg-white divide-y divide-gray-200"></tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<script>
+    // 全局变量：当前会话ID
+    let sessionId = localStorage.getItem('currentSessionId');
+    if (!sessionId) {
+        sessionId = Date.now() + '-' + Math.floor(Math.random() * 1000);
+        localStorage.setItem('currentSessionId', sessionId);
+    }
+
+    // 页面加载完成后初始化
+    document.addEventListener('DOMContentLoaded', function() {
+        const token = localStorage.getItem('token');
+        if (!token || token.trim() === '') {
+            alert('请先登录');
+            window.location.href = 'login.html';
+            return;
+        }
+        initChatFunctions(token);
+        loadHistory(token);
+    });
+
+    // 初始化聊天功能
+    function initChatFunctions(token) {
+        // 新对话按钮事件
+        document.getElementById('newConversationBtn').addEventListener('click', () => {
+            startNewConversation();
+        });
+
+        // 输入框自动调整高度
+        const textarea = document.getElementById('userInput');
+        textarea.addEventListener('input', function() {
+            this.style.height = 'auto';
+            this.style.height = (this.scrollHeight) + 'px';
+        });
+
+        // 发送按钮和回车事件
+        document.getElementById('sendBtn').addEventListener('click', () => sendMessage(token));
+        textarea.addEventListener('keydown', function(e) {
+            if (e.key === 'Enter' && !e.shiftKey) {
+                e.preventDefault();
+                sendMessage(token);
+            }
+        });
+
+        // 模态框控制
+        document.getElementById('knowledgeBtn').addEventListener('click', async () => {
+            document.getElementById('knowledgeModal').classList.remove('hidden');
+            await loadKnowledgeBase(token);
+        });
+        document.getElementById('closeKnowledgeModal').addEventListener('click', () => {
+            document.getElementById('knowledgeModal').classList.add('hidden');
+        });
+
+        document.getElementById('historyBtn').addEventListener('click', async () => {
+            document.getElementById('historyModal').classList.remove('hidden');
+            await loadHistoryTable(token);
+        });
+        document.getElementById('closeHistoryModal').addEventListener('click', () => {
+            document.getElementById('historyModal').classList.add('hidden');
+        });
+
+        // 退出登录
+        document.getElementById('logoutBtn').addEventListener('click', () => {
+            localStorage.removeItem('token');
+            localStorage.removeItem('currentSessionId');
+            window.location.href = 'login.html';
+        });
+
+        // 添加知识
+        document.getElementById('addKnowledgeBtn').addEventListener('click', () => addKnowledge(token));
+    }
+
+    // 开始新对话
+    function startNewConversation() {
+        // 生成新的会话ID
+        const newSessionId = Date.now() + '-' + Math.floor(Math.random() * 1000);
+        localStorage.setItem('currentSessionId', newSessionId);
+        sessionId = newSessionId;
+
+        // 清空聊天区域
+        const chatContainer = document.getElementById('chatMessages');
+        chatContainer.innerHTML = '';
+
+        // 显示欢迎消息
+        const welcomeMessage = `
+            <div class="ai-message-container mb-4">
+                <div class="ai-message message-bubble">
+                    <p>你好！我是智能聊天助手，有什么可以帮助你的吗？</p>
+                </div>
+            </div>
+        `;
+        chatContainer.insertAdjacentHTML('beforeend', welcomeMessage);
+
+        // 清空输入框
+        const input = document.getElementById('userInput');
+        input.value = '';
+        input.style.height = 'auto';
+
+        // 重新加载历史记录列表
+        const token = localStorage.getItem('token');
+        loadHistory(token);
+    }
+
+    // 发送消息到后端
+    async function sendMessage(token) {
+        const input = document.getElementById('userInput');
+        const question = input.value.trim();
+        if (!question) return;
+
+        const userId = localStorage.getItem('userId') || '1';
+        const sessionId = localStorage.getItem('currentSessionId');
+        const modelType = document.getElementById('modelSelector').value; // 获取所选模型类型
+
+        addUserMessage(question);
+        input.value = '';
+        input.style.height = 'auto';
+
+        const typingElement = addAiMessage('', true);
+
+        try {
+            const response = await fetch(`/api/chat/stream?modelType=${modelType}`, {
+                method: 'POST',
+                headers: {
+                    'Authorization': `Bearer ${token}`,
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ userId, sessionId, question })
+            });
+
+            if (!response.ok) throw new Error(`请求失败: ${response.statusText}`);
+
+            const reader = response.body.getReader();
+            const decoder = new TextDecoder();
+            let aiAnswer = '';
+            let isFirstChunk = true;
+
+            while (true) {
+                const { done, value } = await reader.read();
+                if (done) break;
+
+                // 清除所有data:标识
+                let chunkText = decoder.decode(value);
+                const chunks = chunkText.split('\n\n');
+                for (let chunk of chunks) {
+                    chunk = chunk.replace(/^data:\s*/gi, '').trim();
+                    chunk = chunk.replace(/data:/gi, '').trim();
+                    if (!chunk) continue;
+
+                    if (isFirstChunk) {
+                        removeTypingIndicator(typingElement);
+                        isFirstChunk = false;
+                    }
+
+                    aiAnswer += chunk;
+                    updateAiMessage(aiAnswer);
+                }
+
+            }
+
+        } catch (error) {
+            console.error('发送消息出错:', error);
+            removeTypingIndicator(typingElement);
+            addAiMessage(`抱歉，处理请求时出错：${error.message}`);
+        }
+    }
+
+    // 添加用户消息
+    function addUserMessage(content) {
+        const chatMessages = document.getElementById('chatMessages');
+        const messageHtml = `
+            <div class="flex items-end mb-4 justify-end">
+                <div class="user-message message-bubble">
+                    <p>${escapeHtml(content)}</p>
+                </div>
+            </div>
+        `;
+        chatMessages.insertAdjacentHTML('beforeend', messageHtml);
+        scrollToBottom(chatMessages);
+    }
+
+    // 添加AI消息
+    function addAiMessage(content, isTyping = false) {
+        const chatMessages = document.getElementById('chatMessages');
+        let messageHtml;
+
+        if (isTyping) {
+            messageHtml = `
+                <div class="ai-message-container mb-4">
+                    <div class="ai-message message-bubble">
+                        <div class="typing-indicator">
+                            <div class="typing-dot"></div>
+                            <div class="typing-dot" style="animation-delay: 0.2s"></div>
+                            <div class="typing-dot" style="animation-delay: 0.4s"></div>
+                        </div>
+                    </div>
+                </div>
+            `;
+        } else {
+            messageHtml = `
+                <div class="ai-message-container mb-4">
+                    <div class="ai-message message-bubble">
+                        ${markdownToHtml(content)}
+                    </div>
+                </div>
+            `;
+        }
+
+        chatMessages.insertAdjacentHTML('beforeend', messageHtml);
+        scrollToBottom(chatMessages);
+        return chatMessages.lastElementChild;
+    }
+
+    // 更新AI消息内容
+    function updateAiMessage(content) {
+        const chatMessages = document.getElementById('chatMessages');
+        const lastContainer = chatMessages.lastElementChild;
+
+        if (lastContainer && lastContainer.classList.contains('ai-message-container')) {
+            const messageBubble = lastContainer.querySelector('.ai-message');
+            messageBubble.innerHTML = markdownToHtml(content);
+            scrollToBottom(chatMessages);
+        } else {
+            addAiMessage(content);
+        }
+    }
+
+    // 移除打字指示器
+    function removeTypingIndicator(typingElement) {
+        if (typingElement && typingElement.parentNode) {
+            typingElement.remove();
+        }
+    }
+
+    // 滚动到聊天底部
+    function scrollToBottom(element) {
+        element.scrollTop = element.scrollHeight;
+    }
+
+    // HTML转义
+    function escapeHtml(unsafe) {
+        if (!unsafe) return '';
+        return unsafe
+            .replace(/&/g, "&amp;")
+            .replace(/</g, "&lt;")
+            .replace(/>/g, "&gt;")
+            .replace(/"/g, "&quot;")
+            .replace(/'/g, "&#039;");
+    }
+
+    // 增强版Markdown转HTML（支持完整Markdown语法）
+    function markdownToHtml(markdown) {
+        if (!markdown) return '';
+        let html = markdown;
+
+        // 1. 将所有单独的横线（-、--、---）替换为空格
+        html = html.replace(/^-+\s*$/gm, ' ');
+
+        // 2. 解析标题（# 到 ######）
+        html = html.replace(/^###### (.*?)$/gm, '<h6>$1</h6>');
+        html = html.replace(/^##### (.*?)$/gm, '<h5>$1</h5>');
+        html = html.replace(/^#### (.*?)$/gm, '<h4>$1</h4>');
+        html = html.replace(/^### (.*?)$/gm, '<h3>$1</h3>');
+        html = html.replace(/^## (.*?)$/gm, '<h2>$1</h2>');
+        html = html.replace(/^# (.*?)$/gm, '<h1>$1</h1>');
+
+        // 3. 解析列表（无序列表和有序列表）
+        // 无序列表
+        html = html.replace(/^\s*-\s+(.*?)$/gm, '<li>$1</li>');
+        html = html.replace(/(<li>.*?<\/li>)/gs, '<ul>$1</ul>');
+
+        // 有序列表
+        html = html.replace(/^\s*\d+\.\s+(.*?)$/gm, '<li>$1</li>');
+        html = html.replace(/(<li>.*?<\/li>)/gs, '<ol>$1</ol>');
+
+        // 4. 解析引用块
+        html = html.replace(/^\s*>\s+(.*?)$/gm, '<blockquote>$1</blockquote>');
+
+        // 5. 解析代码块
+        html = html.replace(/```([\s\S]*?)```/g, '<pre><code>$1</code></pre>');
+        html = html.replace(/`([^`]+)`/g, '<code>$1</code>');
+
+        // 6. 解析链接
+        html = html.replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2" target="_blank">$1</a>');
+
+        // 7. 解析图片
+        html = html.replace(/!\[([^\]]+)\]\(([^)]+)\)/g, '<img src="$2" alt="$1" class="max-w-full rounded">');
+
+        // 8. 解析强调和加粗
+        html = html.replace(/\*\*\*(.*?)\*\*\*/g, '<strong><em>$1</em></strong>'); // 三重强调
+        html = html.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>'); // 加粗
+        html = html.replace(/\*(.*?)\*/g, '<em>$1</em>'); // 斜体
+        html = html.replace(/__(.*?)__/g, '<strong>$1</strong>'); // 下划线加粗
+        html = html.replace(/_(.*?)_/g, '<em>$1</em>'); // 下划线斜体
+
+        // 9. 解析删除线
+        html = html.replace(/~~(.*?)~~/g, '<del>$1</del>');
+
+        // 10. 解析表格
+        // 简单表格支持
+        const tableRegex = /^\|(.+)\|\n\|([-:]+)\|\n((?:\|.*\|(?:\n|$))+)/gm;
+        html = html.replace(tableRegex, function(match, header, align, rows) {
+            let tableHtml = '<table class="min-w-full divide-y divide-gray-200">';
+
+            // 处理表头
+            const headerCells = header.split('|').map(cell => cell.trim());
+            tableHtml += '<thead class="bg-gray-50"><tr>';
+            headerCells.forEach(cell => {
+                if (cell) tableHtml += `<th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">${cell}</th>`;
+            });
+            tableHtml += '</tr></thead>';
+
+            // 处理表体
+            tableHtml += '<tbody class="bg-white divide-y divide-gray-200">';
+            const rowLines = rows.trim().split('\n');
+            rowLines.forEach(rowLine => {
+                const cells = rowLine.split('|').map(cell => cell.trim());
+                tableHtml += '<tr>';
+                cells.forEach(cell => {
+                    if (cell) tableHtml += `<td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${cell}</td>`;
+                });
+                tableHtml += '</tr>';
+            });
+            tableHtml += '</tbody></table>';
+
+            return tableHtml;
+        });
+
+        return html;
+    }
+
+    // 加载历史记录
+    async function loadHistory(token) {
+        const userId = localStorage.getItem('userId') || '1';
+        try {
+            const response = await fetch(`/api/history/user/${userId}`, {
+                method: 'GET',
+                headers: {
+                    'Authorization': `Bearer ${token}`,
+                    'Content-Type': 'application/json'
+                }
+            });
+
+            if (!response.ok) {
+                throw new Error(`请求失败: ${response.statusText}`);
+            }
+
+            const result = await response.json();
+            const historyList = result.data;
+            const historyContainer = document.getElementById('historyList');
+
+            // 按sessionId分组
+            const sessions = {};
+            historyList.forEach(history => {
+                if (!sessions[history.sessionId]) {
+                    sessions[history.sessionId] = [];
+                }
+                sessions[history.sessionId].push(history);
+            });
+
+            if (Object.keys(sessions).length > 0) {
+                historyContainer.innerHTML = '';
+                // 遍历所有会话
+                Object.keys(sessions).forEach(sessionId => {
+                    const sessionHistory = sessions[sessionId];
+                    // 取最新的一条问题作为会话标题
+                    const latestHistory = sessionHistory[0];
+                    const sessionItem = document.createElement('div');
+                    sessionItem.className = 'p-2 border border-gray-100 rounded-lg hover:bg-gray-50 cursor-pointer transition-custom';
+                    // 当前会话添加高亮样式
+                    if (sessionId === localStorage.getItem('currentSessionId')) {
+                        sessionItem.classList.add('bg-primary/10', 'border-primary/30');
+                    }
+                    sessionItem.innerHTML = `
+                        <div class="text-sm font-medium text-gray-500 truncate">${escapeHtml(latestHistory.question)}</div>
+                        <div class="text-xs text-gray-300 mt-1">${new Date(latestHistory.createTime).toLocaleString()}</div>
+                    `;
+                    // 点击会话加载该会话的历史记录
+                    sessionItem.addEventListener('click', () => {
+                        loadSessionHistory(sessionId, token);
+                    });
+                    historyContainer.appendChild(sessionItem);
+                });
+            } else {
+                historyContainer.innerHTML = '<div class="text-center text-gray-500 py-4">暂无历史记录</div>';
+            }
+        } catch (error) {
+            console.error('加载历史记录失败:', error);
+            document.getElementById('historyList').innerHTML =
+                `<div class="text-center text-danger py-4">加载失败: ${error.message}</div>`;
+        }
+    }
+
+    // 加载特定会话的历史记录
+    async function loadSessionHistory(sessionId, token) {
+        try {
+            const response = await fetch(`/api/history/session/${sessionId}`, {
+                method: 'GET',
+                headers: {
+                    'Authorization': `Bearer ${token}`,
+                    'Content-Type': 'application/json'
+                }
+            });
+
+            if (!response.ok) {
+                throw new Error(`请求失败: ${response.statusText}`);
+            }
+
+            const result = await response.json();
+            const historyList = result.data;
+            const chatContainer = document.getElementById('chatMessages');
+
+            // 清空当前聊天记录
+            chatContainer.innerHTML = '';
+
+            // 添加历史消息
+            historyList.forEach(history => {
+                addUserMessage(history.question);
+                addAiMessage(history.answer);
+            });
+
+            // 更新当前会话ID
+            localStorage.setItem('currentSessionId', sessionId);
+            // 重新加载历史列表以更新高亮状态
+            loadHistory(token);
+        } catch (error) {
+            console.error('加载会话历史失败:', error);
+            alert('加载会话历史失败: ' + error.message);
+        }
+    }
+
+    // 加载知识库
+    async function loadKnowledgeBase(token) {
+        try {
+            const response = await fetch('/api/knowledge/base', {
+                method: 'GET',
+                headers: {
+                    'Authorization': `Bearer ${token}`,
+                    'Content-Type': 'application/json'
+                }
+            });
+
+            if (!response.ok) {
+                throw new Error(`请求失败: ${response.statusText}`);
+            }
+
+            const result = await response.json();
+            const knowledgeList = result.data; // 假设后端返回格式为 {code:200, data: [...]}
+            const knowledgeContainer = document.getElementById('knowledgeBaseList');
+
+            if (knowledgeList && knowledgeList.length > 0) {
+                knowledgeContainer.innerHTML = '';
+                knowledgeList.forEach(knowledge => {
+                    const knowledgeItem = document.createElement('div');
+                    knowledgeItem.className = 'border-b border-gray-100 pb-3 mb-3';
+                    knowledgeItem.innerHTML = `
+                        <div class="font-medium text-gray-500">${escapeHtml(knowledge.question)}</div>
+                        <div class="text-sm text-gray-400 mt-1">${escapeHtml(knowledge.answer)}</div>
+                        <div class="flex justify-end mt-2">
+                            <button class="text-danger text-xs hover:underline"
+                                onclick="deleteKnowledge(${knowledge.id}, '${token}')">
+                                <i class="fa fa-trash-o"></i> 删除
+                            </button>
+                        </div>
+                    `;
+                    knowledgeContainer.appendChild(knowledgeItem);
+                });
+            } else {
+                knowledgeContainer.innerHTML = '<div class="text-gray-500 text-center py-4">暂无知识库内容</div>';
+            }
+        } catch (error) {
+            console.error('加载知识库失败:', error);
+            document.getElementById('knowledgeBaseList').innerHTML =
+                `<div class="text-danger text-center py-4">加载失败: ${error.message}</div>`;
+        }
+    }
+
+    // 加载历史记录表格
+    async function loadHistoryTable(token) {
+        const userId = localStorage.getItem('userId') || '1';
+        try {
+            const response = await fetch(`/api/history/user/${userId}`, {
+                method: 'GET',
+                headers: {
+                    'Authorization': `Bearer ${token}`,
+                    'Content-Type': 'application/json'
+                }
+            });
+
+            if (!response.ok) {
+                throw new Error(`请求失败: ${response.statusText}`);
+            }
+
+            const result = await response.json();
+            const historyList = result.data;
+            const tableBody = document.getElementById('historyTableBody');
+
+            if (historyList && historyList.length > 0) {
+                tableBody.innerHTML = '';
+                historyList.forEach(history => {
+                    const row = document.createElement('tr');
+                    // 格式化时间显示
+                    const createTime = new Date(history.createTime).toLocaleString();
+
+                    row.innerHTML = `
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${escapeHtml(history.question)}</td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${escapeHtml(history.answer.substring(0, 50))}${history.answer.length > 50 ? '...' : ''}</td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${createTime}</td>
+                    `;
+                    tableBody.appendChild(row);
+                });
+            } else {
+                tableBody.innerHTML = '<tr><td colspan="3" class="px-6 py-4 text-center text-gray-500">暂无历史记录</td></tr>';
+            }
+        } catch (error) {
+            console.error('加载历史记录失败:', error);
+            document.getElementById('historyTableBody').innerHTML =
+                `<tr><td colspan="3" class="px-6 py-4 text-center text-danger">加载失败: ${error.message}</td></tr>`;
+        }
+    }
+
+    // 添加知识
+    async function addKnowledge(token) {
+        const questionInput = document.getElementById('newKnowledgeQuestion');
+        const answerInput = document.getElementById('newKnowledgeAnswer');
+
+        const question = questionInput.value.trim();
+        const answer = answerInput.value.trim();
+
+        if (!question || !answer) {
+            alert('问题和答案都不能为空');
+            return;
+        }
+
+        try {
+            const response = await fetch('/api/knowledge/base', {
+                method: 'POST',
+                headers: {
+                    'Authorization': `Bearer ${token}`,
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ question, answer })
+            });
+
+            if (!response.ok) {
+                throw new Error(`添加失败: ${response.statusText}`);
+            }
+
+            // 添加成功后清空输入框并重新加载知识库
+            questionInput.value = '';
+            answerInput.value = '';
+            loadKnowledgeBase(token);
+        } catch (error) {
+            console.error('添加知识失败:', error);
+            alert('添加失败: ' + error.message);
+        }
+    }
+
+    // 删除知识库内容
+    async function deleteKnowledge(id, token) {
+        if (confirm('确定要删除这条知识吗？')) {
+            try {
+                const response = await fetch(`/api/knowledge/base/${id}`, {
+                    method: 'DELETE',
+                    headers: {
+                        'Authorization': `Bearer ${token}`,
+                        'Content-Type': 'application/json'
+                    }
+                });
+
+                if (!response.ok) {
+                    throw new Error(`删除失败: ${response.statusText}`);
+                }
+
+                // 删除成功后重新加载知识库
+                loadKnowledgeBase(token);
+            } catch (error) {
+                console.error('删除知识库失败:', error);
+                alert('删除失败: ' + error.message);
+            }
+        }
+    }
+</script>
+</body>
+</html>
